@@ -62,7 +62,7 @@ const DB={L:dumbbell(),R:dumbbell()};
 const red=new THREE.MeshBasicMaterial({color:0xff3b30,transparent:true,opacity:0,depthWrite:false});
 const orange=new THREE.MeshBasicMaterial({color:0xff9f0a,transparent:true,opacity:0,depthWrite:false});
 function glow(mat,sx,sy,sz){const m=new THREE.Mesh(new THREE.SphereGeometry(1,24,16),mat);m.scale.set(sx,sy,sz);m.renderOrder=2;scene.add(m);return m;}
-const M={latL:glow(red,0.09,0.17,0.035),latR:glow(red,0.09,0.17,0.035),rh:glow(red,0.11,0.08,0.03),tr:glow(orange,0.15,0.05,0.035),rdL:glow(orange,0.05,0.06,0.05),rdR:glow(orange,0.05,0.06,0.05)};
+const M={latL:glow(red,0.09,0.17,0.035),latR:glow(red,0.09,0.17,0.035),rh:glow(red,0.11,0.08,0.03),tr:glow(orange,0.15,0.05,0.035),rdL:glow(orange,0.04,0.045,0.035),rdR:glow(orange,0.04,0.045,0.035)};
 const guide=new THREE.Mesh(new THREE.CylinderGeometry(0.006,0.006,1,8),new THREE.MeshBasicMaterial({color:0x30d158}));scene.add(guide);
 
 const F=V(0,0,1),U=V(0,1,0),Lx=V(1,0,0);
@@ -82,9 +82,9 @@ const down=(ang,side,out)=>U.clone().multiplyScalar(-Math.cos(ang)).add(F.clone(
 function pose(a){
  aim('Hips',tilt(PELVIS));aim('Spine',tilt(HINGE*0.9));aim('Spine1',tilt(HINGE));aim('Spine2',tilt(HINGE));aim('Neck',tilt(HINGE-0.15));aim('Head',tilt(HINGE-0.3));
  for(const [k,s] of[['Left',1],['Right',-1]]){
-  aim(k+'UpLeg',down(-0.36,s,0.05));aim(k+'Leg',down(0.2,s,0));aim(k+'Foot',rest[k+'Foot'].dir);
-  aim(k+'Arm',down(0.05+1.1*a,s,0.05+0.15*a));
-  const fa=down(-0.05-0.1*a,s,0.15*a);aim(k+'ForeArm',fa);aim(k+'Hand',fa);
+  aim(k+'UpLeg',down(-0.36,s,0.08));aim(k+'Leg',down(0.2,s,0.03));aim(k+'Foot',rest[k+'Foot'].dir);
+  aim(k+'Arm',down(0.05+1.1*a,s,0.05+0.07*a));
+  const fa=down(-0.05-0.1*a,s,0.1*a);aim(k+'ForeArm',fa);aim(k+'Hand',fa);
   const hd=fa.clone().normalize(),inn=Lx.clone().multiplyScalar(-s);
   const c1=hd.clone().multiplyScalar(0.45).add(inn.clone().multiplyScalar(0.89)),c2=hd.clone().multiplyScalar(-0.55).add(inn.clone().multiplyScalar(0.83)),c3=hd.clone().multiplyScalar(-0.95).add(inn.clone().multiplyScalar(0.3));
   for(const f of FING){aim(k+'Hand'+f+'1',c1);aim(k+'Hand'+f+'2',c2);aim(k+'Hand'+f+'3',c3);}
@@ -103,7 +103,7 @@ function overlays(a){
  M.rh.position.copy(s2).lerp(nk,0.3).add(back.clone().multiplyScalar(0.07));
  M.tr.position.copy(nk).add(back.clone().multiplyScalar(0.035));
  for(const m of[M.latL,M.latR,M.rh,M.tr])m.quaternion.copy(q);
- M.rdL.position.copy(P('LeftArm')).add(back.clone().multiplyScalar(0.05));M.rdR.position.copy(P('RightArm')).add(back.clone().multiplyScalar(0.05));
+ M.rdL.position.copy(P('LeftArm')).add(back.clone().multiplyScalar(0.07));M.rdR.position.copy(P('RightArm')).add(back.clone().multiplyScalar(0.07));
  const h0=P('Hips'),ld=nk.clone().sub(h0).normalize(),bn=ld.clone().cross(Lx).normalize();const g0=h0.add(bn.clone().multiplyScalar(0.14)),g1=nk.clone().add(bn.clone().multiplyScalar(0.12));
  guide.position.copy(g0).lerp(g1,0.5);guide.scale.y=g0.distanceTo(g1);guide.quaternion.setFromUnitVectors(U,g1.clone().sub(g0).normalize());
  for(const [k,key2,s] of[['Left','L',1],['Right','R',-1]]){const h=P(k+'Hand'),f=P(k+'ForeArm');const d=h.clone().sub(f).normalize();
