@@ -19,7 +19,7 @@ button.on{background:#30d158;color:#08130b}
 <script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"}}</script>
 </head><body>
 <div id="hud"><h1>Bent-over dumbbell row</h1><p>3 × 12 to 15 · 8 kg per hand · drag to rotate, pinch to zoom</p></div>
-<div id="cue">Loading…</div>
+<div id="cue">Loading 3D model…</div>
 <div id="bar">
 <div class="row" id="views">
 <button data-v="q" class="on">3/4</button><button data-v="side">Side</button><button data-v="front">Front</button><button data-v="back">Back</button><button data-v="top">Top</button>
@@ -33,151 +33,106 @@ button.on{background:#30d158;color:#08130b}
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
-
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+const V=(x,y,z)=>new THREE.Vector3(x,y,z);
+const cue=document.getElementById('cue'),play=document.getElementById('play'),slow=document.getElementById('slow'),mus=document.getElementById('mus'),gd=document.getElementById('guide');
 const renderer=new THREE.WebGLRenderer({antialias:true});
-renderer.setPixelRatio(Math.min(devicePixelRatio,2));
-renderer.setSize(innerWidth,innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);
 renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;
 document.body.appendChild(renderer.domElement);
-
-const scene=new THREE.Scene();
-scene.background=new THREE.Color(0x0d0f12);
-scene.fog=new THREE.Fog(0x0d0f12,6,14);
-const pm=new THREE.PMREMGenerator(renderer);
-scene.environment=pm.fromScene(new RoomEnvironment(),0.04).texture;
-
-const camera=new THREE.PerspectiveCamera(38,innerWidth/innerHeight,0.05,50);
-camera.position.set(2.6,1.7,2.6);
-const controls=new OrbitControls(camera,renderer.domElement);
-controls.target.set(0,0.75,0);controls.enableDamping=true;controls.minDistance=1.4;controls.maxDistance=7;controls.maxPolarAngle=Math.PI*0.495;
-
-// lights
-const key=new THREE.DirectionalLight(0xffffff,2.2);key.position.set(3,5,2.5);key.castShadow=true;
-key.shadow.mapSize.set(2048,2048);Object.assign(key.shadow.camera,{left:-2,right:2,top:2,bottom:-2,near:0.5,far:12});key.shadow.radius=4;key.shadow.bias=-0.0004;
-scene.add(key);
-const rim=new THREE.DirectionalLight(0x7fb4ff,1.4);rim.position.set(-3,2.5,-3);scene.add(rim);
-scene.add(new THREE.HemisphereLight(0xbfd4ff,0x1a1410,0.35));
-const spot=new THREE.SpotLight(0xffffff,18,9,0.55,0.6);spot.position.set(0,5,0);spot.target.position.set(0,0,0);scene.add(spot,spot.target);
-
-// floor
-const floor=new THREE.Mesh(new THREE.CircleGeometry(4,96),new THREE.MeshStandardMaterial({color:0x1a1d22,roughness:0.85,metalness:0}));
-floor.rotation.x=-Math.PI/2;floor.receiveShadow=true;scene.add(floor);
-const ring=new THREE.Mesh(new THREE.RingGeometry(1.15,1.17,128),new THREE.MeshBasicMaterial({color:0x30d158,transparent:true,opacity:0.35}));
-ring.rotation.x=-Math.PI/2;ring.position.y=0.002;scene.add(ring);
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x0d0f12);scene.fog=new THREE.Fog(0x0d0f12,6,14);
+scene.environment=new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(),0.04).texture;
+const camera=new THREE.PerspectiveCamera(38,innerWidth/innerHeight,0.05,50);camera.position.set(2.6,1.6,2.6);
+const controls=new OrbitControls(camera,renderer.domElement);controls.target.set(0,0.75,0);controls.enableDamping=true;controls.minDistance=1.3;controls.maxDistance=7;controls.maxPolarAngle=Math.PI*0.495;
+const key=new THREE.DirectionalLight(0xffffff,2.4);key.position.set(3,5,2.5);key.castShadow=true;key.shadow.mapSize.set(2048,2048);
+Object.assign(key.shadow.camera,{left:-2,right:2,top:2,bottom:-2,near:0.5,far:12});key.shadow.radius=4;key.shadow.bias=-0.0004;scene.add(key);
+const rim=new THREE.DirectionalLight(0x7fb4ff,1.6);rim.position.set(-3,2.5,-3);scene.add(rim);
+scene.add(new THREE.HemisphereLight(0xbfd4ff,0x1a1410,0.4));
+const floor=new THREE.Mesh(new THREE.CircleGeometry(4,96),new THREE.MeshStandardMaterial({color:0x1a1d22,roughness:0.85}));floor.rotation.x=-Math.PI/2;floor.receiveShadow=true;scene.add(floor);
+const ring=new THREE.Mesh(new THREE.RingGeometry(1.15,1.17,128),new THREE.MeshBasicMaterial({color:0x30d158,transparent:true,opacity:0.35}));ring.rotation.x=-Math.PI/2;ring.position.y=0.002;scene.add(ring);
 const grid=new THREE.GridHelper(8,32,0x2a2f36,0x20242a);grid.position.y=0.001;grid.material.transparent=true;grid.material.opacity=0.5;scene.add(grid);
 
-// materials
-const skin=new THREE.MeshPhysicalMaterial({color:0xd8cfc4,roughness:0.42,metalness:0.0,clearcoat:0.6,clearcoatRoughness:0.35,sheen:0.4,sheenColor:new THREE.Color(0xffe8d6)});
-const joint=new THREE.MeshPhysicalMaterial({color:0x8a8f98,roughness:0.3,metalness:0.6,clearcoat:1});
-const iron=new THREE.MeshStandardMaterial({color:0x1b1d20,roughness:0.35,metalness:0.85});
-const chrome=new THREE.MeshStandardMaterial({color:0xcfd3d8,roughness:0.15,metalness:1});
-const red=new THREE.MeshBasicMaterial({color:0xff3b30,transparent:true,opacity:0.0,depthWrite:false});
-const orange=new THREE.MeshBasicMaterial({color:0xff9f0a,transparent:true,opacity:0.0,depthWrite:false});
+// dumbbells
+const iron=new THREE.MeshStandardMaterial({color:0x1b1d20,roughness:0.35,metalness:0.85}),chrome=new THREE.MeshStandardMaterial({color:0xcfd3d8,roughness:0.15,metalness:1});
+function dumbbell(){const g=new THREE.Group();const h=new THREE.Mesh(new THREE.CylinderGeometry(0.016,0.016,0.17,20),chrome);g.add(h);
+ for(const y of[-0.115,0.115]){const p=new THREE.Mesh(new THREE.CylinderGeometry(0.07,0.07,0.05,40),iron);p.position.y=y;g.add(p);}g.traverse(o=>o.castShadow=true);scene.add(g);return g;}
+const DB={L:dumbbell(),R:dumbbell()};
+// muscle glows
+const red=new THREE.MeshBasicMaterial({color:0xff3b30,transparent:true,opacity:0,depthWrite:false});
+const orange=new THREE.MeshBasicMaterial({color:0xff9f0a,transparent:true,opacity:0,depthWrite:false});
+function glow(mat,sx,sy,sz){const m=new THREE.Mesh(new THREE.SphereGeometry(1,24,16),mat);m.scale.set(sx,sy,sz);m.renderOrder=2;scene.add(m);return m;}
+const M={latL:glow(red,0.09,0.17,0.035),latR:glow(red,0.09,0.17,0.035),rh:glow(red,0.11,0.08,0.03),tr:glow(orange,0.15,0.05,0.035),rdL:glow(orange,0.05,0.06,0.05),rdR:glow(orange,0.05,0.06,0.05)};
+const guide=new THREE.Mesh(new THREE.CylinderGeometry(0.006,0.006,1,8),new THREE.MeshBasicMaterial({color:0x30d158}));scene.add(guide);
 
-function cap(r,len,mat=skin){const m=new THREE.Mesh(new THREE.CapsuleGeometry(r,len,12,24),mat);m.castShadow=true;m.receiveShadow=true;return m;}
-function ball(r,mat=joint){const m=new THREE.Mesh(new THREE.SphereGeometry(r,28,20),mat);m.castShadow=true;return m;}
-function G(parent,x=0,y=0,z=0){const g=new THREE.Group();g.position.set(x,y,z);parent.add(g);return g;}
-// limb: group at joint, mesh hanging along -Y
-function limb(parent,x,y,z,r,len){const g=G(parent,x,y,z);const m=cap(r,len);m.position.y=-len/2;g.add(m);g.add(ball(r*1.05));return g;}
-
-// skeleton (faces +Z)
-const root=G(scene,0,0.95,0);
-const pelvis=new THREE.Mesh(new THREE.SphereGeometry(0.17,32,24),skin);pelvis.scale.set(1.05,0.75,0.8);pelvis.castShadow=true;root.add(pelvis);
-const spine=G(root,0,0.05,0);
-const abd=cap(0.13,0.16);abd.scale.set(1.15,1,0.85);abd.position.y=0.14;spine.add(abd);
-const chest=new THREE.Mesh(new THREE.SphereGeometry(0.2,40,28),skin);chest.scale.set(1.1,1.15,0.72);chest.position.y=0.38;chest.castShadow=true;spine.add(chest);
-const neck=G(spine,0,0.56,0);const nm=cap(0.05,0.06);nm.position.y=0.04;neck.add(nm);
-const head=new THREE.Mesh(new THREE.SphereGeometry(0.105,36,28),skin);head.scale.set(0.92,1.08,1);head.position.set(0,0.17,0.01);head.castShadow=true;neck.add(head);
-// face direction marker (nose)
-const nose=ball(0.016,skin);nose.position.set(0,0.165,0.11);neck.add(nose);
-// muscles on back (local -Z)
-const lats=[];
-for(const s of[-1,1]){const l=new THREE.Mesh(new THREE.SphereGeometry(0.11,24,16),red);l.scale.set(0.9,1.7,0.35);l.position.set(0.11*s,0.3,-0.1);spine.add(l);lats.push(l);}
-const rhomb=new THREE.Mesh(new THREE.SphereGeometry(0.09,24,16),red);rhomb.scale.set(1.3,1,0.3);rhomb.position.set(0,0.44,-0.135);spine.add(rhomb);
-const traps=new THREE.Mesh(new THREE.SphereGeometry(0.1,24,16),orange);traps.scale.set(1.6,0.6,0.35);traps.position.set(0,0.53,-0.09);spine.add(traps);
-
-const sh={},el={},ha={},hip={},kn={},ft={};
-for(const s of[-1,1]){
-  const k=s<0?'L':'R';
-  const sg=G(spine,0.235*s,0.5,0);sg.add(ball(0.065,skin));
-  sh[k]=limb(sg,0,0,0,0.05,0.24);
-  const delt=new THREE.Mesh(new THREE.SphereGeometry(0.05,20,14),orange);delt.scale.set(1.1,1.3,1.1);delt.position.set(0,-0.04,-0.03);sh[k].add(delt);delt.userData.m=1;
-  el[k]=limb(sh[k],0,-0.3,0,0.042,0.22);
-  ha[k]=G(el[k],0,-0.28,0);ha[k].add(ball(0.045,skin));
-  // dumbbell, handle along Z (neutral grip)
-  const db=G(ha[k],0,-0.02,0);
-  const h=new THREE.Mesh(new THREE.CylinderGeometry(0.016,0.016,0.17,20),chrome);h.rotation.x=Math.PI/2;h.castShadow=true;db.add(h);
-  for(const z of[-0.115,0.115]){const p=new THREE.Mesh(new THREE.CylinderGeometry(0.07,0.07,0.05,40),iron);p.rotation.x=Math.PI/2;p.position.z=z;p.castShadow=true;db.add(p);}
-  hip[k]=limb(root,0.1*s,-0.06,0,0.075,0.36);
-  kn[k]=limb(hip[k],0,-0.44,0,0.058,0.36);
-  ft[k]=G(kn[k],0,-0.45,0);const f=cap(0.04,0.14);f.rotation.x=Math.PI/2;f.position.set(0,-0.03,0.06);ft[k].add(f);
-}
-spine.userData.side=sh;
-
-// back guide line
-const guide=new THREE.Mesh(new THREE.CylinderGeometry(0.006,0.006,0.75,8),new THREE.MeshBasicMaterial({color:0x30d158}));
-guide.position.set(0,0.33,-0.17);spine.add(guide);
-
-// static pose
-const HINGE=0.82; // ~47° forward
-spine.rotation.x=HINGE;
-root.position.z=-0.12;
-for(const k of['L','R']){hip[k].rotation.x=-0.42;kn[k].rotation.x=0.55;ft[k].rotation.x=-0.13;hip[k].rotation.z=(k=='L'?-1:1)*0.04;}
-neck.rotation.x=-0.25;
-
-// put feet on floor
-scene.updateMatrixWorld(true);
-const v=new THREE.Vector3();ft.L.getWorldPosition(v);root.position.y-= (v.y-0.07);
-
-// motion
-const ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
-function amount(t){ // 4.2 s cycle
-  const T=t%4.2;
-  if(T<1.0)return{a:ease(T/1.0),ph:'Pull to your lower ribs'};
-  if(T<2.0)return{a:1,ph:'Squeeze shoulder blades · 1 sec'};
-  if(T<4.0)return{a:1-ease((T-2)/2),ph:'Lower slowly · 2 sec'};
-  return{a:0,ph:'Arms long · brace'};
-}
+const F=V(0,0,1),U=V(0,1,0),Lx=V(1,0,0);
+const HINGE=0.82;
+const B={},rest={};let model=null;
+const AIM=[['Spine','Spine1'],['Spine1','Spine2'],['Spine2','Neck'],['Neck','Head'],['Head','HeadTop_End'],
+ ['LeftUpLeg','LeftLeg'],['LeftLeg','LeftFoot'],['LeftFoot','LeftToeBase'],['RightUpLeg','RightLeg'],['RightLeg','RightFoot'],['RightFoot','RightToeBase'],
+ ['LeftArm','LeftForeArm'],['LeftForeArm','LeftHand'],['LeftHand','LeftHandMiddle1'],['RightArm','RightForeArm'],['RightForeArm','RightHand'],['RightHand','RightHandMiddle1']];
+const tq=new THREE.Quaternion(),pq=new THREE.Quaternion(),tv=V(0,0,0),tv2=V(0,0,0);
+function aim(n,d){const r=rest[n],b=B[n];if(!r||!b)return;
+ tq.setFromUnitVectors(r.dir,d.clone().normalize()).multiply(r.q);
+ b.parent.getWorldQuaternion(pq);b.quaternion.copy(pq.invert().multiply(tq));b.updateMatrixWorld(true);}
+const tilt=(h)=>U.clone().multiplyScalar(Math.cos(h)).add(F.clone().multiplyScalar(Math.sin(h)));
+const down=(ang,side,out)=>U.clone().multiplyScalar(-Math.cos(ang)).add(F.clone().multiplyScalar(-Math.sin(ang))).add(Lx.clone().multiplyScalar(side*out));
 function pose(a){
-  for(const s of[-1,1]){const k=s<0?'L':'R';
-    sh[k].rotation.x=-HINGE+0.08+1.18*a;          // arm hangs vertical → pulled back
-    sh[k].rotation.z=s*(0.06+0.1*a);               // elbows stay close
-    el[k].rotation.x=-0.12-1.28*a;                 // elbow flexion
-    ha[k].rotation.x=0.12+0.15*a;
-    sh[k].parent.position.x=0.235*s - 0.018*s*a;   // retraction
-    sh[k].parent.position.y=0.5+0.012*a;
-  }
-  const on=mus.classList.contains('on');
-  const o=on?0.18+0.5*a:0;lats.forEach(l=>l.material.opacity=o);rhomb.material.opacity=o;
-  orange.opacity=on?0.12+0.3*a:0;
-  chest.scale.y=1.15+0.01*Math.sin(clockT*1.6);
+ aim('Spine',tilt(HINGE));aim('Spine1',tilt(HINGE));aim('Spine2',tilt(HINGE));aim('Neck',tilt(HINGE-0.2));aim('Head',tilt(HINGE-0.4));
+ for(const [k,s] of[['Left',1],['Right',-1]]){
+  aim(k+'UpLeg',down(-0.38,s,0.06));aim(k+'Leg',down(0.22,s,0));aim(k+'Foot',rest[k+'Foot'].dir);
+  aim(k+'Arm',down(0.08+1.15*a,s,0.10+0.06*a));
+  const fa=down(-0.05-0.12*a,s,0.03);aim(k+'ForeArm',fa);aim(k+'Hand',fa);
+ }
 }
+const P=n=>B[n].getWorldPosition(V(0,0,0));
+function overlays(a){
+ const on=mus.classList.contains('on');red.opacity=on?0.15+0.5*a:0;orange.opacity=on?0.1+0.3*a:0;
+ const sd=tilt(HINGE),back=U.clone().multiplyScalar(Math.sin(HINGE)).add(F.clone().multiplyScalar(-Math.cos(HINGE)));
+ const q=new THREE.Quaternion().setFromUnitVectors(U,sd);
+ const s1=P('Spine1'),s2=P('Spine2'),nk=P('Neck'),sp=P('Spine');
+ const mid=s1.clone().lerp(s2,0.4).add(back.clone().multiplyScalar(0.1));
+ M.latL.position.copy(mid).add(V(0.1,0,0));M.latR.position.copy(mid).add(V(-0.1,0,0));
+ M.rh.position.copy(s2).lerp(nk,0.3).add(back.clone().multiplyScalar(0.11));
+ M.tr.position.copy(nk).add(back.clone().multiplyScalar(0.06));
+ for(const m of[M.latL,M.latR,M.rh,M.tr])m.quaternion.copy(q);
+ M.rdL.position.copy(P('LeftArm')).add(back.clone().multiplyScalar(0.05));M.rdR.position.copy(P('RightArm')).add(back.clone().multiplyScalar(0.05));
+ const g0=sp.clone().add(back.clone().multiplyScalar(0.16)),g1=nk.clone().add(back.clone().multiplyScalar(0.13));
+ guide.position.copy(g0).lerp(g1,0.5);guide.scale.y=g0.distanceTo(g1);guide.quaternion.setFromUnitVectors(U,g1.clone().sub(g0).normalize());
+ for(const [k,key2] of[['Left','L'],['Right','R']]){const h=P(k+'Hand'),f=P(k+'ForeArm');const d=h.clone().sub(f).normalize();
+  DB[key2].position.copy(h).add(d.multiplyScalar(0.07));DB[key2].quaternion.setFromUnitVectors(U,F);}
+}
+new GLTFLoader().load('https://cdn.jsdelivr.net/gh/mrdoob/three.js@r160/examples/models/gltf/Xbot.glb',g=>{
+ model=g.scene;scene.add(model);
+ model.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;o.frustumCulled=false;}
+  if(o.isBone){B[o.name.replace(/^mixamorig:?/,'').replace(/[^A-Za-z0-9_]/g,'')]=o;}});
+ model.updateMatrixWorld(true);
+ for(const [n,c] of AIM){if(!B[n]||!B[c])continue;const p=P(n),cp=P(c);rest[n]={dir:cp.sub(p).normalize(),q:B[n].getWorldQuaternion(new THREE.Quaternion())};}
+ pose(0);model.updateMatrixWorld(true);
+ const y=Math.min(P('LeftToeBase').y,P('LeftFoot').y-0.08,P('RightToeBase').y);model.position.y-=y;model.position.z=-0.08;model.updateMatrixWorld(true);
+ ready=true;
+},undefined,e=>{cue.textContent='Could not load the 3D model';console.error(e);});
 
-// UI
-const cue=document.getElementById('cue'),play=document.getElementById('play'),slow=document.getElementById('slow'),mus=document.getElementById('mus'),gd=document.getElementById('guide');
-let playing=true,speed=1,clockT=0,last=performance.now();
+const ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+function amount(t){const T=t%4.2;
+ if(T<1.0)return{a:ease(T),ph:'Pull to your lower ribs'};
+ if(T<2.0)return{a:1,ph:'Squeeze shoulder blades · 1 sec'};
+ if(T<4.0)return{a:1-ease((T-2)/2),ph:'Lower slowly · 2 sec'};
+ return{a:0,ph:'Arms long · brace'};}
+let ready=false,playing=true,speed=1,clockT=0,last=performance.now(),reps=0,prevA=0;
 play.onclick=()=>{playing=!playing;play.textContent=playing?'Pause':'Play';play.classList.toggle('on',playing);};
 slow.onclick=()=>{speed=speed===1?0.35:1;slow.classList.toggle('on',speed!==1);};
 mus.onclick=()=>mus.classList.toggle('on');
-gd.onclick=()=>{gd.classList.toggle('on');guide.visible=gd.classList.contains('on');};
-const views={q:[2.6,1.7,2.6],side:[3.3,1.0,0.0],front:[0,1.15,3.3],back:[0,1.5,-3.2],top:[0.01,4.2,0.6]};
+gd.onclick=()=>gd.classList.toggle('on');
+const views={q:[2.6,1.6,2.6],side:[3.3,0.95,0.0],front:[0,1.1,3.3],back:[0,1.5,-3.2],top:[0.01,4.2,0.6]};
 let tw=null;
-document.querySelectorAll('#views button').forEach(b=>b.onclick=()=>{
-  document.querySelectorAll('#views button').forEach(x=>x.classList.remove('on'));b.classList.add('on');
-  tw={from:camera.position.clone(),to:new THREE.Vector3(...views[b.dataset.v]),t:0};
-});
+document.querySelectorAll('#views button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#views button').forEach(x=>x.classList.remove('on'));b.classList.add('on');tw={from:camera.position.clone(),to:V(...views[b.dataset.v]),t:0};});
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
-
-function frame(now){
-  const dt=Math.min(0.05,(now-last)/1000);last=now;
-  if(playing)clockT+=dt*speed;
-  const {a,ph}=amount(clockT);pose(a);
-  if(cue.textContent!==ph)cue.textContent=ph;
-  cue.style.color=a>0.95?'#30d158':'#f2f2f7';
-  if(tw){tw.t=Math.min(1,tw.t+dt*1.6);camera.position.lerpVectors(tw.from,tw.to,ease(tw.t));if(tw.t>=1)tw=null;}
-  controls.update();renderer.render(scene,camera);requestAnimationFrame(frame);
-}
+function frame(now){const dt=Math.min(0.05,(now-last)/1000);last=now;
+ if(ready){if(playing)clockT+=dt*speed;const {a,ph}=amount(clockT);pose(a);overlays(a);guide.visible=gd.classList.contains('on');
+  if(a>=1&&prevA<1)reps=reps%12+1;prevA=a;const txt=ph+' · rep '+reps+'/12';if(cue.textContent!==txt)cue.textContent=txt;cue.style.color=a>0.95?'#30d158':'#f2f2f7';}
+ if(tw){tw.t=Math.min(1,tw.t+dt*1.6);camera.position.lerpVectors(tw.from,tw.to,ease(tw.t));if(tw.t>=1)tw=null;}
+ controls.update();renderer.render(scene,camera);requestAnimationFrame(frame);}
 requestAnimationFrame(frame);
 </script>
 </body></html>
