@@ -186,7 +186,7 @@ export function start(EX,DAYS){
   controls.target.copy(target);goView(curView,true);ready=true;
  },undefined,e=>{cue.textContent='Could not load the 3D model';console.error(e);});
  function runTests(){const out={};const r3=v=>[+v.x.toFixed(3),+v.y.toFixed(3),+v.z.toFixed(3)];
-  for(const id2 in EX){const e=EX[id2];if(e.href)continue;ex=e;for(const kk in mem)delete mem[kk];out[id2]={};
+  const only=(new URLSearchParams(location.search).get('test')||'').split(',').filter(x=>EX[x]);for(const id2 in EX){const e=EX[id2];if(e.href)continue;if(only.length&&only.indexOf(id2)<0)continue;ex=e;for(const kk in mem)delete mem[kk];out[id2]={};
    try{buildProps();}catch(err){out[id2].propErr=String(err);}
    const sides=(e.sides||e.alt)?[1,-1]:[1];const lets=id2==='ytw'?[0,1,2]:[0];
    for(const sd of sides)for(const lt of lets)for(const a of[0,0.5,1]){const key=sd+'/'+lt+'/'+a;

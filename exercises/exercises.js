@@ -13,19 +13,22 @@ function holdTL(secs,label){return (t,s)=>{const H=typeof secs==='function'?secs
  return {a:0,cue:'Rest',rep:n,noRep:1};};}
 
 function pushup(k,a,o){
- const top=k.m.arm+k.m.wr-0.03,Hs=top+(o.bottom-top)*a;let phi=k.mem.phi||0,D=1.4;
- for(let i=0;i<3;i++){
-  k.frame(k.Q(X,Math.PI/2+phi));
-  const d=V(0,-Math.sin(phi),Math.cos(phi));
-  k.spine(d,d,d,d,N(0,-Math.sin(phi)-0.3,Math.cos(phi)));
-  for(const sd of[1,-1]){const n=k.side(sd),ld=d.clone().negate();k.aim(n+'UpLeg',ld.clone().add(V(0.03*sd,0,0)));k.aim(n+'Leg',ld);k.aim(n+'Foot',N(0,-1,0.15));}
-  k.place(k.mid('LeftToeBase','RightToeBase'),V(0,o.Ht,o.Zt));
-  const sh=k.mid('LeftArm','RightArm');D=Math.hypot(sh.y-o.Ht,sh.z-o.Zt);
-  if(i<2)phi=Math.asin(Math.max(-0.6,Math.min(0.6,(o.Ht-Hs)/D)));
- }
- k.mem.phi=phi;
- const hz=o.Zt+D*Math.cos(Math.asin(Math.max(-0.9,Math.min(0.9,(o.Ht-top)/D))));
- for(const sd of[1,-1]){const n=k.side(sd);k.arm(n,V(o.hx*sd,k.m.wr,hz+o.dz),o.bend(sd),V(0,-1,0));k.hand(n,'flat',V(0,-1,0),o.fdir(sd));}
+ const top=k.m.arm+k.m.wr-0.03;
+ const solve=Hs=>{let phi=k.mem.phi||0,sh=null;
+  for(let i=0;i<6;i++){
+   k.frame(k.Q(X,Math.PI/2+phi));
+   const d=V(0,-Math.sin(phi),Math.cos(phi));
+   k.spine(d,d,d,d,N(0,-Math.sin(phi)-0.3,Math.cos(phi)));
+   for(const sd of[1,-1]){const n=k.side(sd),ld=d.clone().negate();k.aim(n+'UpLeg',ld.clone().add(V(0.03*sd,0,0)));k.aim(n+'Leg',ld);k.aim(n+'Foot',N(0,-1,0.15));}
+   k.place(k.mid('LeftToeBase','RightToeBase'),V(0,o.Ht,o.Zt));
+   sh=k.mid('LeftArm','RightArm');const D=Math.hypot(sh.y-o.Ht,sh.z-o.Zt);
+   if(i<5)phi+=Math.asin(Math.max(-0.5,Math.min(0.5,(sh.y-Hs)/D)));
+  }
+  k.mem.phi=phi;return sh;};
+ const key='hz'+o.Ht;
+ if(k.mem[key]===undefined)k.mem[key]=solve(top).z;
+ solve(top+(o.bottom-top)*a);
+ for(const sd of[1,-1]){const n=k.side(sd);k.arm(n,V(o.hx*sd,k.m.wr,k.mem[key]+o.dz),o.bend(sd),V(0,-1,0));k.hand(n,'flat',V(0,-1,0),o.fdir(sd));}
 }
 
 export const EX={
@@ -41,7 +44,7 @@ export const EX={
    k.frame(k.Q(X,Math.PI/2));
    k.spine(Z,N(0,0.02,1),N(0,0.04+0.06*a,1),N(0,0.02,1),N(0,-0.35,1));
    k.place(k.P('Hips'),V(0,0.11,-0.35));
-   for(const sd of[1,-1]){const n=k.side(sd);k.aim(n+'UpLeg',N(0.05*sd,-0.06,-1));k.aim(n+'Leg',N(0.04*sd,-0.02,-1));k.aim(n+'Foot',N(0,-0.3,-0.95));
+   for(const sd of[1,-1]){const n=k.side(sd);k.aim(n+'UpLeg',N(0.05*sd,-0.06,-1));k.aim(n+'Leg',N(0.04*sd,-0.02,-1));k.aim(n+'Foot',N(0,-0.12,-0.99));
     const ly=-0.15+0.45*a;let up,fo;
     if(st.letter===0){up=fo=N(0.6*sd,ly,0.8);}
     else if(st.letter===1){up=fo=N(sd,ly,0.05);}
@@ -109,7 +112,7 @@ export const EX={
     const el=sd===s,ext=N(0.03*sd,0.04,-1);
     k.aim(n+'UpLeg',el?lerpN(V(0,-1,0),ext,a):V(0,-1,0));
     k.aim(n+'Leg',el?lerpN(N(0,-0.02,-1),ext,a):N(0,-0.02,-1));
-    k.aim(n+'Foot',el?lerpN(N(0,-0.3,-0.95),N(0,-0.95,-0.3),a):N(0,-0.3,-0.95));
+    k.aim(n+'Foot',el?lerpN(N(0,0.02,-1),N(0,-0.95,-0.3),a):N(0,0.02,-1));
     const ea=sd===-s;
     const up=ea?lerpN(V(0,-1,0),N(0.05*sd,0.04,1),a):V(0,-1,0);
     const palm=ea?lerpN(V(0,-1,0),V(-sd,0,0),a):V(0,-1,0);
@@ -124,9 +127,9 @@ export const EX={
   pose(k,a){k.frame(k.Q(X,Math.PI/2));const l=0.3*a,dir=x=>N(0,Math.sin(x),Math.cos(x));
    k.spine(dir(0),dir(l*0.35),dir(l*0.9),dir(l*0.9),dir(l*0.9-0.3));
    k.place(k.P('Hips'),V(0,0.11,-0.2));
-   for(const sd of[1,-1]){const n=k.side(sd),lf=0.2*a;
+   for(const sd of[1,-1]){const n=k.side(sd),lf=0.15*a;
     k.aim(n+'UpLeg',N(0.05*sd,Math.sin(lf)-0.04,-Math.cos(lf)));k.aim(n+'Leg',N(0.04*sd,Math.sin(lf)-0.02,-Math.cos(lf)));k.aim(n+'Foot',N(0,-0.25,-0.97));
-    const up=N(0.3*sd,-0.12+0.5*a+Math.sin(l),1),palm=k.palmFromThumb(up,Y,sd);
+    const up=N(0.3*sd,-0.12+0.3*a+Math.sin(l),1),palm=k.palmFromThumb(up,Y,sd);
     k.aim(n+'Arm',up);k.aim(n+'ForeArm',up,palm);k.hand(n,'open',palm);}
   }},
 
@@ -135,9 +138,9 @@ export const EX={
   muscles:[['lats','p'],['biceps','s'],['rhomb','s'],['lowtrap','s']],
   tempo:[[0.8,0,1,'Step up · chin over the bar'],[0.7,1,1,'Hold at the top'],[5,1,0,'Lower slowly · 5 sec'],[1,0,0,'Dead hang · reset']],
   props(k){const H=2.25;k.bar(V(-0.62,H,0.03),V(0.62,H,0.03),0.016);for(const x of[-0.66,0.66])k.box(0.08,H+0.3,0.12,x,(H+0.3)/2,0.03);k.box(1.4,0.1,0.12,0,H+0.35,0.03);},
-  pose(k,a){const H=2.25,W=H-0.085,bot=W-k.m.arm+0.01,top=H-0.2,sh=bot+(top-bot)*a,lb=-0.05-0.1*a;
+  pose(k,a){const H=2.25,W=H-0.085,bot=W-k.m.arm+0.01,top=H-0.14,sh=bot+(top-bot)*a,lb=-0.05-0.1*a;
    k.spine(tilt(-0.04),tilt(lb*0.6),tilt(lb),tilt(lb+0.05),tilt(lb+0.1));
-   k.place(k.mid('LeftArm','RightArm'),V(0,sh,-0.04-0.1*a));
+   k.place(k.mid('LeftArm','RightArm'),V(0,sh,-0.04-0.14*a));
    for(const sd of[1,-1]){const n=k.side(sd);k.aim(n+'UpLeg',N(0.03*sd,-1,0.12));k.aim(n+'Leg',N(0.02*sd,-1,-0.12));k.aim(n+'Foot',N(0,-0.75,0.66));
     k.arm(n,V(0.29*sd,W,0.005),N(0.8*sd,-0.2,-0.3),Z);k.hand(n,'grip',Z,Y);}
   }},
@@ -148,9 +151,10 @@ export const EX={
   tempo:[[1,0,1,'Pull your elbow to your hip'],[1,1,1,'Squeeze · 1 sec'],[2,1,0,'Lower slowly · 2 sec'],[0.3,0,0,'Full stretch']],
   props(k,s){k.chair(-0.2*s,0.34,-1);},
   pose(k,a,s){const w=k.side(s),o=k.side(-s),hy=0.86,shY=0.47+k.m.wr+k.m.arm*0.95;
-   const be=Math.asin(Math.max(-0.6,Math.min(0.6,(shY-hy)/k.m.hs))),h=Math.PI/2-be;
-   k.spine(tilt(h-0.3),tilt(h-0.05),tilt(h),tilt(h-0.1),tilt(h-0.4));
-   k.place(k.P('Hips'),V(0,hy,-0.28));
+   let h=k.mem.oh||1.15;
+   for(let i=0;i<4;i++){k.spine(tilt(h-0.3),tilt(h-0.05),tilt(h),tilt(h-0.1),tilt(h-0.4));k.place(k.P('Hips'),V(0,hy,-0.28));
+    const sy=k.P(o+'Arm').y;if(i<3)h+=Math.asin(Math.max(-0.4,Math.min(0.4,(sy-shY)/k.m.hs)));}
+   k.mem.oh=h;
    k.leg(o,V(-0.12*s,k.m.ank,0.1),N(-0.1*s,0,1));k.aim(o+'Foot',N(-0.1*s,-0.4,0.9));
    k.leg(w,V(0.14*s,k.m.ank,-0.52),N(0.1*s,0,1));k.aim(w+'Foot',N(0.1*s,-0.4,0.9));
    const sp=k.P(o+'Arm');k.arm(o,V(sp.x-0.03*s,0.47+k.m.wr,sp.z+0.12),N(-0.3*s,0,-1),V(0,-1,0));k.hand(o,'flat',V(0,-1,0),Z);
