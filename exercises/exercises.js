@@ -5,12 +5,6 @@ const lerpN=(a,b,t)=>a.clone().lerp(b,t).normalize();
 const tilt=h=>V(0,Math.cos(h),Math.sin(h));
 const ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
 const X=V(1,0,0),Y=V(0,1,0),Z=V(0,0,1);
-const pad=n=>(n<10?'0':'')+n;
-function holdTL(secs,label){return (t,s)=>{const H=typeof secs==='function'?secs(s):secs;const C=H+4,n=Math.floor(t/C),u=t-n*C;
- if(u<1)return {a:ease(u),cue:'Get into position',rep:n,noRep:1};
- if(u<1+H){const left=Math.ceil(1+H-u);return {a:1,cue:label+' · 0:'+pad(left),rep:n,noRep:1};}
- if(u<2+H)return {a:1-ease(u-1-H),cue:'Rest',rep:n,noRep:1};
- return {a:0,cue:'Rest',rep:n,noRep:1};};}
 
 function pushup(k,a,o){
  const top=k.m.arm+k.m.wr-0.03;
@@ -37,9 +31,7 @@ export const EX={
  ytw:{name:'Y, T, W raises',sub:'1 set each · 12 to 15 slow reps · 1 kg',reps:15,view:'q',dbSize:0.55,
   tips:'Face down, forehead near the floor · thumbs up · lift arms off the floor and squeeze 2 sec · don’t arch your neck',
   muscles:[['lowtrap','p'],['rhomb','p'],['reardelt','p'],['traps','s']],
-  timeline(t){const C=4,T=t%(3*C),i=Math.floor(T/C),u=T-i*C,l=['Y','T','W'][i];let a,c;
-   if(u<1){a=ease(u);c='Lift into '+l;}else if(u<3){a=1;c='Hold the '+l+' · squeeze 2 sec';}else{a=1-ease(u-3);c='Lower to the floor';}
-   return {a,cue:c,letter:i,rep:Math.floor(t/(3*C))};},
+  tempo:[[1,0,1,'Lift into the {L}'],[2,1,1,'Hold the {L} · squeeze'],[1.5,1,0,'Lower to the floor'],[0.5,0,0,'Relax']],letters:['Y','T','W'],sets:3,setRest:30,
   pose(k,a,s,st){
    k.frame(k.Q(X,Math.PI/2));
    k.spine(Z,N(0,0.02,1),N(0,0.04+0.06*a,1),N(0,0.02,1),N(0,-0.35,1));
@@ -56,7 +48,7 @@ export const EX={
  sideplank:{name:'Side plank',sub:'Left down 3 × 30 to 40 sec · right down 2 × 20 to 30 sec',sides:true,view:'front',
   tips:'Elbow right under the shoulder · straight line from head to heels · hips up, don’t let them sag · breathe',
   muscles:[['obliques.W','p'],['glutemed.W','p'],['abs','s'],['frontdelt.W','s']],line:{a:'@Foot',b:'Head',w:[0,0,0.17]},
-  timeline:holdTL(s=>s>0?35:25,'Hold'),
+  hold:true,sets:3,setRest:60,tempo:[[1.5,0,1,'Get into position'],[35,1,1,'Hold'],[1.5,1,0,'Come down']],
   pose(k,a,s){const w=k.side(s),o=k.side(-s),Hs=k.len[w+'Arm']+0.045,key='sp'+s;let th=k.mem[key]||0.2;
    for(let i=0;i<3;i++){
     k.frame(k.Q(Z,s*(th-Math.PI/2)));
@@ -99,7 +91,7 @@ export const EX={
    for(const sd of[1,-1]){const n=k.side(sd);k.aim(n+'Arm',N(0.1*sd,-1,0.02));k.aim(n+'ForeArm',N(0.06*sd,-1,0.04),V(-sd,0,0));k.dbHand(sd>0?0:1,k.hand(n,'grip',V(-sd,0,0)));}
   }},
 
- birddog:{name:'Bird dog',sub:'2 × 8 per side · 3 sec hold',alt:true,reps:8,view:'side',
+ birddog:{name:'Bird dog',sub:'2 × 8 per side · 3 sec hold',alt:true,reps:8,sets:2,setRest:60,view:'side',
   tips:'Hands under shoulders, knees under hips · reach long, not high · keep hips level · flat back',
   muscles:[['erectors','p'],['glutes.W','p'],['reardelt.O','s'],['abs','s']],line:{a:'Hips',b:'Neck',o:0.12},
   tempo:[[1.5,0,1,'Reach out long'],[3,1,1,'Hold 3 sec · hips level'],[1.5,1,0,'Back to all fours'],[0.5,0,0,'Switch sides']],
@@ -123,7 +115,7 @@ export const EX={
  superman:{name:'Superman hold',sub:'2 × 30 to 40 sec',view:'side',
   tips:'Lift arms, chest and legs together · look at the floor · squeeze your glutes · a small lift is enough',
   muscles:[['erectors','p'],['glutes','p'],['hams','s'],['lowtrap','s'],['reardelt','s']],
-  timeline:holdTL(35,'Hold'),
+  hold:true,sets:2,setRest:60,tempo:[[1.5,0,1,'Lift arms, chest and legs'],[35,1,1,'Hold'],[1.5,1,0,'Lower down']],
   pose(k,a){k.frame(k.Q(X,Math.PI/2));const l=0.3*a,dir=x=>N(0,Math.sin(x),Math.cos(x));
    k.spine(dir(0),dir(l*0.35),dir(l*0.9),dir(l*0.9),dir(l*0.9-0.3));
    k.place(k.P('Hips'),V(0,0.11,-0.2));
@@ -193,7 +185,7 @@ export const EX={
    k.db(0,C.clone().add(tu.clone().multiplyScalar(-0.07)),tu);
   }},
 
- deadbug:{name:'Weighted dead bug',sub:'2 × 8 per side · dumbbell held up',alt:true,reps:8,view:'side',dbSize:0.9,
+ deadbug:{name:'Weighted dead bug',sub:'2 × 8 per side · dumbbell held up',alt:true,reps:8,sets:2,setRest:60,view:'side',dbSize:0.9,
   tips:'Lower back pressed into the floor · arms straight up holding the weight · straighten one leg slowly · breathe out as you reach',
   muscles:[['abs','p'],['obliques','s']],
   tempo:[[2,0,1,'Straighten the leg · breathe out'],[0.6,1,1,'Hover · back flat'],[1.5,1,0,'Bring it back'],[0.4,0,0,'Switch']],
