@@ -218,8 +218,8 @@ export const EX={
    k.spine(d,d,d,N(0,-0.05,-1),V(0,0,-1));
    k.place(k.P('Hips'),H);
    k.leg(w,V(0.11*s,k.m.ank,0.62),N(0,1,0.2));k.aim(w+'Foot',N(0,-0.35,0.94));
-   const ex=d.clone().negate().add(V(0,0.25,0)).normalize();k.aim(o+'UpLeg',ex);k.aim(o+'Leg',ex);k.aim(o+'Foot',ex.clone().add(V(0,0.4,0)));
-   for(const sd of[1,-1]){const n=k.side(sd);k.aim(n+'Arm',N(0.2*sd,-0.2,1));k.aim(n+'ForeArm',N(0.15*sd,-0.1,1),V(0,-1,0));k.hand(n,'flat',V(0,-1,0));}
+   const ex=k.P(w+'Leg').sub(k.P(w+'UpLeg')).normalize();k.aim(o+'UpLeg',ex);k.aim(o+'Leg',ex);k.aim(o+'Foot',ex.clone().add(V(0,0.4,0)));
+   for(const sd of[1,-1]){const n=k.side(sd);k.aim(n+'Arm',N(0.2*sd,-0.12,1));k.aim(n+'ForeArm',N(0.15*sd,-0.04,1),V(0,-1,0));k.hand(n,'flat',V(0,-1,0));}
   }}
 };
 
