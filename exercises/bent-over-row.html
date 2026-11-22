@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Bent-over dumbbell row · 3D</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:#0d0f12;color:#f2f2f7;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",Helvetica,Arial,sans-serif}
+canvas{display:block;touch-action:none}
+#hud{position:fixed;left:0;right:0;top:0;padding:14px 16px;pointer-events:none;background:linear-gradient(#0d0f12ee,#0d0f1200)}
+#hud h1{font-size:18px;font-weight:700}
+#hud p{font-size:13px;color:#9aa0a6;margin-top:2px}
+#cue{position:fixed;left:50%;top:76px;transform:translateX(-50%);padding:8px 14px;border-radius:20px;background:#ffffff14;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);font-size:15px;font-weight:600;white-space:nowrap;pointer-events:none;transition:color .2s}
+#bar{position:fixed;left:0;right:0;bottom:0;padding:10px 10px calc(14px + env(safe-area-inset-bottom));background:linear-gradient(#0d0f1200,#0d0f12f0 40%)}
+.row{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:6px}
+button{appearance:none;border:0;border-radius:18px;padding:8px 13px;font:600 13px -apple-system,Helvetica,Arial,sans-serif;background:#ffffff1a;color:#f2f2f7}
+button.on{background:#30d158;color:#08130b}
+#tips{font-size:12px;color:#9aa0a6;text-align:center;margin-top:8px}
+</style>
+<script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"}}</script>
+</head><body>
+<div id="hud"><h1>Bent-over dumbbell row</h1><p>3 × 12 to 15 · 8 kg per hand · drag to rotate, pinch to zoom</p></div>
+<div id="cue">Loading…</div>
+<div id="bar">
+<div class="row" id="views">
+<button data-v="q" class="on">3/4</button><button data-v="side">Side</button><button data-v="front">Front</button><button data-v="back">Back</button><button data-v="top">Top</button>
+</div>
+<div class="row">
+<button id="play" class="on">Pause</button><button id="slow">Slow-mo</button><button id="mus" class="on">Muscles</button><button id="guide" class="on">Back line</button>
+</div>
+<div id="tips">Flat back at ~45° · eyes on the floor ahead · elbows close · pull to lower ribs</div>
+</div>
+<script type="module">
+import * as THREE from 'three';
+import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
+
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setSize(innerWidth,innerHeight);
+renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;
+document.body.appendChild(renderer.domElement);
+
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x0d0f12);
+scene.fog=new THREE.Fog(0x0d0f12,6,14);
+const pm=new THREE.PMREMGenerator(renderer);
+scene.environment=pm.fromScene(new RoomEnvironment(),0.04).texture;
+
+const camera=new THREE.PerspectiveCamera(38,innerWidth/innerHeight,0.05,50);
+camera.position.set(2.6,1.7,2.6);
+const controls=new OrbitControls(camera,renderer.domElement);
+controls.target.set(0,0.75,0);controls.enableDamping=true;controls.minDistance=1.4;controls.maxDistance=7;controls.maxPolarAngle=Math.PI*0.495;
+
+// lights
+const key=new THREE.DirectionalLight(0xffffff,2.2);key.position.set(3,5,2.5);key.castShadow=true;
+key.shadow.mapSize.set(2048,2048);Object.assign(key.shadow.camera,{left:-2,right:2,top:2,bottom:-2,near:0.5,far:12});key.shadow.radius=4;key.shadow.bias=-0.0004;
+scene.add(key);
+const rim=new THREE.DirectionalLight(0x7fb4ff,1.4);rim.position.set(-3,2.5,-3);scene.add(rim);
+scene.add(new THREE.HemisphereLight(0xbfd4ff,0x1a1410,0.35));
+const spot=new THREE.SpotLight(0xffffff,18,9,0.55,0.6);spot.position.set(0,5,0);spot.target.position.set(0,0,0);scene.add(spot,spot.target);
+
+// floor
+const floor=new THREE.Mesh(new THREE.CircleGeometry(4,96),new THREE.MeshStandardMaterial({color:0x1a1d22,roughness:0.85,metalness:0}));
+floor.rotation.x=-Math.PI/2;floor.receiveShadow=true;scene.add(floor);
+const ring=new THREE.Mesh(new THREE.RingGeometry(1.15,1.17,128),new THREE.MeshBasicMaterial({color:0x30d158,transparent:true,opacity:0.35}));
+ring.rotation.x=-Math.PI/2;ring.position.y=0.002;scene.add(ring);
+const grid=new THREE.GridHelper(8,32,0x2a2f36,0x20242a);grid.position.y=0.001;grid.material.transparent=true;grid.material.opacity=0.5;scene.add(grid);
+
+// materials
+const skin=new THREE.MeshPhysicalMaterial({color:0xd8cfc4,roughness:0.42,metalness:0.0,clearcoat:0.6,clearcoatRoughness:0.35,sheen:0.4,sheenColor:new THREE.Color(0xffe8d6)});
+const joint=new THREE.MeshPhysicalMaterial({color:0x8a8f98,roughness:0.3,metalness:0.6,clearcoat:1});
+const iron=new THREE.MeshStandardMaterial({color:0x1b1d20,roughness:0.35,metalness:0.85});
+const chrome=new THREE.MeshStandardMaterial({color:0xcfd3d8,roughness:0.15,metalness:1});
+const red=new THREE.MeshBasicMaterial({color:0xff3b30,transparent:true,opacity:0.0,depthWrite:false});
+const orange=new THREE.MeshBasicMaterial({color:0xff9f0a,transparent:true,opacity:0.0,depthWrite:false});
+
+function cap(r,len,mat=skin){const m=new THREE.Mesh(new THREE.CapsuleGeometry(r,len,12,24),mat);m.castShadow=true;m.receiveShadow=true;return m;}
+function ball(r,mat=joint){const m=new THREE.Mesh(new THREE.SphereGeometry(r,28,20),mat);m.castShadow=true;return m;}
+function G(parent,x=0,y=0,z=0){const g=new THREE.Group();g.position.set(x,y,z);parent.add(g);return g;}
+// limb: group at joint, mesh hanging along -Y
+function limb(parent,x,y,z,r,len){const g=G(parent,x,y,z);const m=cap(r,len);m.position.y=-len/2;g.add(m);g.add(ball(r*1.05));return g;}
+
+// skeleton (faces +Z)
+const root=G(scene,0,0.95,0);
+const pelvis=new THREE.Mesh(new THREE.SphereGeometry(0.17,32,24),skin);pelvis.scale.set(1.05,0.75,0.8);pelvis.castShadow=true;root.add(pelvis);
+const spine=G(root,0,0.05,0);
+const abd=cap(0.13,0.16);abd.scale.set(1.15,1,0.85);abd.position.y=0.14;spine.add(abd);
+const chest=new THREE.Mesh(new THREE.SphereGeometry(0.2,40,28),skin);chest.scale.set(1.1,1.15,0.72);chest.position.y=0.38;chest.castShadow=true;spine.add(chest);
+const neck=G(spine,0,0.56,0);const nm=cap(0.05,0.06);nm.position.y=0.04;neck.add(nm);
+const head=new THREE.Mesh(new THREE.SphereGeometry(0.105,36,28),skin);head.scale.set(0.92,1.08,1);head.position.set(0,0.17,0.01);head.castShadow=true;neck.add(head);
+// face direction marker (nose)
+const nose=ball(0.016,skin);nose.position.set(0,0.165,0.11);neck.add(nose);
+// muscles on back (local -Z)
+const lats=[];
+for(const s of[-1,1]){const l=new THREE.Mesh(new THREE.SphereGeometry(0.11,24,16),red);l.scale.set(0.9,1.7,0.35);l.position.set(0.11*s,0.3,-0.1);spine.add(l);lats.push(l);}
+const rhomb=new THREE.Mesh(new THREE.SphereGeometry(0.09,24,16),red);rhomb.scale.set(1.3,1,0.3);rhomb.position.set(0,0.44,-0.135);spine.add(rhomb);
+const traps=new THREE.Mesh(new THREE.SphereGeometry(0.1,24,16),orange);traps.scale.set(1.6,0.6,0.35);traps.position.set(0,0.53,-0.09);spine.add(traps);
+
+const sh={},el={},ha={},hip={},kn={},ft={};
+for(const s of[-1,1]){
+  const k=s<0?'L':'R';
+  const sg=G(spine,0.235*s,0.5,0);sg.add(ball(0.065,skin));
+  sh[k]=limb(sg,0,0,0,0.05,0.24);
+  const delt=new THREE.Mesh(new THREE.SphereGeometry(0.05,20,14),orange);delt.scale.set(1.1,1.3,1.1);delt.position.set(0,-0.04,-0.03);sh[k].add(delt);delt.userData.m=1;
+  el[k]=limb(sh[k],0,-0.3,0,0.042,0.22);
+  ha[k]=G(el[k],0,-0.28,0);ha[k].add(ball(0.045,skin));
+  // dumbbell, handle along Z (neutral grip)
+  const db=G(ha[k],0,-0.02,0);
+  const h=new THREE.Mesh(new THREE.CylinderGeometry(0.016,0.016,0.17,20),chrome);h.rotation.x=Math.PI/2;h.castShadow=true;db.add(h);
+  for(const z of[-0.115,0.115]){const p=new THREE.Mesh(new THREE.CylinderGeometry(0.07,0.07,0.05,40),iron);p.rotation.x=Math.PI/2;p.position.z=z;p.castShadow=true;db.add(p);}
+  hip[k]=limb(root,0.1*s,-0.06,0,0.075,0.36);
+  kn[k]=limb(hip[k],0,-0.44,0,0.058,0.36);
+  ft[k]=G(kn[k],0,-0.45,0);const f=cap(0.04,0.14);f.rotation.x=Math.PI/2;f.position.set(0,-0.03,0.06);ft[k].add(f);
+}
+spine.userData.side=sh;
+
+// back guide line
+const guide=new THREE.Mesh(new THREE.CylinderGeometry(0.006,0.006,0.75,8),new THREE.MeshBasicMaterial({color:0x30d158}));
+guide.position.set(0,0.33,-0.17);spine.add(guide);
+
+// static pose
+const HINGE=0.82; // ~47° forward
+spine.rotation.x=HINGE;
+root.position.z=-0.12;
+for(const k of['L','R']){hip[k].rotation.x=-0.42;kn[k].rotation.x=0.55;ft[k].rotation.x=-0.13;hip[k].rotation.z=(k=='L'?-1:1)*0.04;}
+neck.rotation.x=-0.25;
+
+// put feet on floor
+scene.updateMatrixWorld(true);
+const v=new THREE.Vector3();ft.L.getWorldPosition(v);root.position.y-= (v.y-0.07);
+
+// motion
+const ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+function amount(t){ // 4.2 s cycle
+  const T=t%4.2;
+  if(T<1.0)return{a:ease(T/1.0),ph:'Pull to your lower ribs'};
+  if(T<2.0)return{a:1,ph:'Squeeze shoulder blades · 1 sec'};
+  if(T<4.0)return{a:1-ease((T-2)/2),ph:'Lower slowly · 2 sec'};
+  return{a:0,ph:'Arms long · brace'};
+}
+function pose(a){
+  for(const s of[-1,1]){const k=s<0?'L':'R';
+    sh[k].rotation.x=-HINGE+0.08+1.18*a;          // arm hangs vertical → pulled back
+    sh[k].rotation.z=s*(0.06+0.1*a);               // elbows stay close
+    el[k].rotation.x=-0.12-1.28*a;                 // elbow flexion
+    ha[k].rotation.x=0.12+0.15*a;
+    sh[k].parent.position.x=0.235*s - 0.018*s*a;   // retraction
+    sh[k].parent.position.y=0.5+0.012*a;
+  }
+  const on=mus.classList.contains('on');
+  const o=on?0.18+0.5*a:0;lats.forEach(l=>l.material.opacity=o);rhomb.material.opacity=o;
+  orange.opacity=on?0.12+0.3*a:0;
+  chest.scale.y=1.15+0.01*Math.sin(clockT*1.6);
+}
+
+// UI
+const cue=document.getElementById('cue'),play=document.getElementById('play'),slow=document.getElementById('slow'),mus=document.getElementById('mus'),gd=document.getElementById('guide');
+let playing=true,speed=1,clockT=0,last=performance.now();
+play.onclick=()=>{playing=!playing;play.textContent=playing?'Pause':'Play';play.classList.toggle('on',playing);};
+slow.onclick=()=>{speed=speed===1?0.35:1;slow.classList.toggle('on',speed!==1);};
+mus.onclick=()=>mus.classList.toggle('on');
+gd.onclick=()=>{gd.classList.toggle('on');guide.visible=gd.classList.contains('on');};
+const views={q:[2.6,1.7,2.6],side:[3.3,1.0,0.0],front:[0,1.15,3.3],back:[0,1.5,-3.2],top:[0.01,4.2,0.6]};
+let tw=null;
+document.querySelectorAll('#views button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('#views button').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+  tw={from:camera.position.clone(),to:new THREE.Vector3(...views[b.dataset.v]),t:0};
+});
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
+
+function frame(now){
+  const dt=Math.min(0.05,(now-last)/1000);last=now;
+  if(playing)clockT+=dt*speed;
+  const {a,ph}=amount(clockT);pose(a);
+  if(cue.textContent!==ph)cue.textContent=ph;
+  cue.style.color=a>0.95?'#30d158':'#f2f2f7';
+  if(tw){tw.t=Math.min(1,tw.t+dt*1.6);camera.position.lerpVectors(tw.from,tw.to,ease(tw.t));if(tw.t>=1)tw=null;}
+  controls.update();renderer.render(scene,camera);requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body></html>
