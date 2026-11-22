@@ -18,7 +18,7 @@ function pushup(k,a,o){
   for(let i=0;i<6;i++){
    k.frame(k.Q(X,Math.PI/2+phi));
    const d=V(0,-Math.sin(phi),Math.cos(phi));
-   k.spine(d,d,d,d,N(0,-Math.sin(phi)-0.3,Math.cos(phi)));
+   k.spine(d,d,d,d,N(0,-Math.sin(phi)-0.08,Math.cos(phi)));
    for(const sd of[1,-1]){const n=k.side(sd),ld=d.clone().negate();k.aim(n+'UpLeg',ld.clone().add(V(0.03*sd,0,0)));k.aim(n+'Leg',ld);k.aim(n+'Foot',N(0,-1,0.15));}
    k.place(k.mid('LeftToeBase','RightToeBase'),V(0,o.Ht,o.Zt));
    sh=k.mid('LeftArm','RightArm');const D=Math.hypot(sh.y-o.Ht,sh.z-o.Zt);
@@ -79,7 +79,7 @@ export const EX={
   muscles:[['chest','p'],['frontdelt','p'],['triceps','s'],['abs','s']],line:{a:'LeftFoot',b:'Neck',o:0.12},
   tempo:[[2,0,1,'Lower your chest · 2 sec'],[0.4,1,1,'Chest just above the floor'],[1,1,0,'Push up · 1 sec'],[0.6,0,0,'Arms long · stay tight']],
   props(k){k.chair(0,-0.86,1);},
-  pose(k,a){pushup(k,a,{Ht:0.49,Zt:-0.8,bottom:0.2,hx:0.21,dz:0.02,fdir:()=>Z,bend:sd=>N(0.55*sd,0.45,-0.7)});}},
+  pose(k,a){pushup(k,a,{Ht:0.49,Zt:-0.8,bottom:0.23,hx:0.21,dz:0.02,fdir:()=>Z,bend:sd=>N(0.55*sd,0.45,-0.7)});}},
 
  diamond:{name:'Diamond push-ups',sub:'3 × 5 to 15',reps:12,view:'side',
   tips:'Thumbs and index fingers touch under your chest · elbows brush your sides · body in one line',
