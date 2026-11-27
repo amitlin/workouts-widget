@@ -26,7 +26,18 @@ function pushup(k,a,o){
 }
 
 export const EX={
- row:{name:'Bent-over dumbbell row',sub:'3 × 12 to 15 · 8 kg per hand',href:'bent-over-row.html'},
+ row:{name:'Bent-over dumbbell row',sub:'3 × 10 to 15 · 8 to 10 kg per hand',reps:12,view:'side',
+  tips:'Hinge to about 45° · flat back · eyes on the floor ahead · pull both elbows to your lower ribs · squeeze 1 sec',
+  muscles:[['lats','p'],['rhomb','p'],['reardelt','s'],['biceps','s']],
+  tempo:[[1,0,1,'Pull both elbows to your ribs'],[1,1,1,'Squeeze · 1 sec'],[2,1,0,'Lower slowly · 2 sec'],[0.3,0,0,'Arms long']],
+  pose(k,a,s){const h=0.8;
+   k.spine(tilt(h-0.25),tilt(h-0.05),tilt(h),tilt(h-0.05),tilt(h-0.35));
+   k.place(k.P('Hips'),V(0,0.84,-0.12));
+   for(const sd of[1,-1]){const n=k.side(sd);
+    k.leg(n,V(0.13*sd,k.m.ank,0.04),N(0.1*sd,0,1));k.aim(n+'Foot',N(0.1*sd,-0.4,0.9));
+    const ang=0.05+1.2*a;k.aim(n+'Arm',N(0.1*sd,-Math.cos(ang),-Math.sin(ang)));
+    const fa=N(0.03*sd,-Math.cos(0.05+0.1*a),Math.sin(0.05+0.1*a));k.aim(n+'ForeArm',fa,V(-sd,0,0));k.dbHand(sd>0?0:1,k.hand(n,'grip',V(-sd,0,0)));}
+  }},
 
  ytw:{name:'Y, T, W raises',sub:'1 set each · 12 to 15 slow reps · 1 kg',reps:15,view:'q',dbSize:0.55,
   tips:'Face down, forehead near the floor · thumbs up · lift arms off the floor and squeeze 2 sec · don’t arch your neck',
